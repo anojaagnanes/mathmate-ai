@@ -51,7 +51,7 @@ def test_step_sets_and_variable_changes():
     assert not analyze(['y=5','x=5'])['valid']
     assert analyze(['3n+4=40','3n=36','n=11'])['first_incorrect_step'] == 3
 
-@pytest.mark.parametrize('text', ['diff(x^3,x)','integrate(x^2,x)','Matrix([[1,2]])','x^3=1'])
+@pytest.mark.parametrize('text', ['Matrix([[1,2]])','x^3=1'])
 def test_later_phase_errors(text):
     with pytest.raises(MathError): solve(text)
 

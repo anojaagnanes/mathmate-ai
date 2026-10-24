@@ -29,6 +29,9 @@ def solve(equation, variable=None):
         raise MathError('Use a question of 1–200 characters.')
     if variable and variable not in VARIABLES:
         raise MathError('Choose a supported variable such as x, y, z or n.')
+    if re.match(r'\s*(?:diff\b|integrate\b|d/d)', equation):
+        from .calculus import solve_calculus
+        return solve_calculus(equation, variable)
     if ';' in equation or '\n' in equation or ' with ' in equation:
         from .advanced_maths import solve_system
         return solve_system(equation, variable)
@@ -116,7 +119,7 @@ def solve(equation, variable=None):
 
 def analyze(steps):
     original = solve(steps[0])
-    if original.get('topic') in ('Linear system', 'Polynomial inequality') or original['kind'] in ('expression', 'underdetermined', 'parametric'):
+    if original.get('topic') in ('Linear system', 'Polynomial inequality') or original['kind'] in ('expression', 'underdetermined', 'parametric', 'calculus'):
         raise MathError('Step checking currently requires single-variable linear or quadratic equations.')
     variable = original['variable']
     for index, text in enumerate(steps[1:], 1):

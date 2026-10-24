@@ -59,7 +59,7 @@ class SolutionStep(BaseModel):
 
 
 class SolutionOut(BaseModel):
-    kind: Literal['unique', 'none', 'infinite', 'multiple', 'expression', 'underdetermined', 'parametric', 'system', 'inequality']
+    kind: Literal['unique', 'none', 'infinite', 'multiple', 'expression', 'underdetermined', 'parametric', 'system', 'inequality', 'calculus']
     domain_conditions: list[str] = Field(default_factory=list)
     assignments: dict[str, str] = Field(default_factory=dict)
     solutions: list[str] = Field(default_factory=list)
