@@ -21,7 +21,7 @@ def _worker(connection, operation, args):
 
 
 def calculate(operation, *args, timeout=TIMEOUT_SECONDS):
-    if operation not in ('solve', 'analyze', 'expression'):
+    if operation not in ('solve', 'analyze', 'expression', 'function_graph'):
         raise MathError('Unsupported calculation.')
     if not SLOTS.acquire(blocking=False):
         raise MathError('The maths engine is busy. Please try again shortly.')

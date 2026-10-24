@@ -59,7 +59,9 @@ class SolutionStep(BaseModel):
 
 
 class SolutionOut(BaseModel):
-    kind: Literal['unique', 'none', 'infinite', 'multiple', 'expression', 'underdetermined', 'parametric']
+    kind: Literal['unique', 'none', 'infinite', 'multiple', 'expression', 'underdetermined', 'parametric', 'system', 'inequality']
+    domain_conditions: list[str] = Field(default_factory=list)
+    assignments: dict[str, str] = Field(default_factory=dict)
     solutions: list[str] = Field(default_factory=list)
     variable: str | None = None
     variables: list[str] = Field(default_factory=list)
@@ -166,3 +168,16 @@ class ProgressOut(BaseModel):
 class GraphOut(BaseModel):
     points: list[dict[str, float]]
     x_intercept: float | None
+
+
+class FunctionGraph(BaseModel):
+    expression: str = Field(min_length=1, max_length=200)
+    minimum: float = Field(default=-5, ge=-10, le=10, allow_inf_nan=False)
+    maximum: float = Field(default=5, ge=-10, le=10, allow_inf_nan=False)
+
+
+class FunctionGraphOut(BaseModel):
+    segments: list[list[dict[str, float]]]
+    latex: str
+    domain_conditions: list[str]
+    note: str

@@ -16,7 +16,7 @@ from .models import *
 from .schemas import Register, Login, Equation, Steps, Answer, Chat, Preferences, Graph
 from .security import current_user, csrf, rate_limit, passwords, issue, digest, revoke_family
 from .math_parser import MathError
-from .math_runtime import solve, analyze, expression
+from .math_runtime import solve, analyze, expression, calculate
 from .adaptive import recommend
 from .providers import get_provider
 from . import schemas as dto
@@ -350,3 +350,8 @@ def recommendations(user: Student, db: DB):
 def tutor_status(user: Student):
     configured = settings.ai_provider == 'meta' and bool(settings.model_api_key)
     return {'provider': settings.ai_provider, 'configured': configured, 'live_verified': False, 'message': 'Meta is configured; requests may still fail if the account lacks model access.' if configured else 'Local development mode. Set AI_PROVIDER=meta and MODEL_API_KEY on the backend to enable Meta text and vision.'}
+
+
+@app.post(prefix + '/math/function-graph', response_model=dto.FunctionGraphOut)
+def function_graph(data: dto.FunctionGraph, user: Student):
+    return calculate('function_graph', data.expression, data.minimum, data.maximum)

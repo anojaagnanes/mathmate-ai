@@ -1,6 +1,7 @@
 """Phase 1 deterministic maths handlers, shared by typed and confirmed image input."""
 import sympy as sp
-from .math_parser import MathError, VARIABLES, parse
+import re
+from .math_parser import MathError, VARIABLES, parse, parse_defined
 
 x = sp.Symbol('x', real=True)  # Compatibility for existing callers.
 
@@ -28,14 +29,20 @@ def solve(equation, variable=None):
         raise MathError('Use a question of 1–200 characters.')
     if variable and variable not in VARIABLES:
         raise MathError('Choose a supported variable such as x, y, z or n.')
+    if ';' in equation or '\n' in equation or ' with ' in equation:
+        from .advanced_maths import solve_system
+        return solve_system(equation, variable)
+    if any(op in equation for op in ('<', '>', '≤', '≥')):
+        from .advanced_maths import solve_inequality
+        return solve_inequality(equation, variable)
     if '=' not in equation:
-        value, names = parse(equation)
+        value, names, conditions = parse_defined(equation)
         result = sp.expand(value)
-        topic = 'Algebraic expression' if names else 'Arithmetic'
+        topic = 'Functions (radians; natural log)' if re.search(r'\b(sin|cos|tan|log|exp)\s*\(', equation) else ('Algebraic expression' if names else 'Arithmetic')
         return dict(kind='expression', solution=str(result), solutions=[], variable=None,
-                    variables=sorted(names), topic=topic, domain='real', verified=True,
+                    variables=sorted(names), topic=topic, domain='real', verified=True, domain_conditions=[str(c) for c in conditions],
                     latex=sp.latex(result), steps=[step(equation, 'Read the expression.'),
-                    step(str(result), 'Evaluate exact arithmetic and collect like terms. An expression without an equals sign is simplified, not solved for a variable.', sp.latex(result))])
+                    step(str(result), 'Evaluate exact arithmetic and collect like terms. Angles are in radians; log is the natural logarithm. '+('Preserve the domain restrictions: '+', '.join(str(c) for c in conditions)+'.' if conditions else 'This expression is simplified, not solved for a variable.'), sp.latex(result))])
     if equation.count('=') != 1:
         raise MathError('Enter a single equation. Simultaneous equations are planned for Phase 2.')
     left, left_names = parse(equation.split('=')[0])
@@ -109,7 +116,7 @@ def solve(equation, variable=None):
 
 def analyze(steps):
     original = solve(steps[0])
-    if original['kind'] in ('expression', 'underdetermined', 'parametric'):
+    if original.get('topic') in ('Linear system', 'Polynomial inequality') or original['kind'] in ('expression', 'underdetermined', 'parametric'):
         raise MathError('Step checking currently requires single-variable linear or quadratic equations.')
     variable = original['variable']
     for index, text in enumerate(steps[1:], 1):
@@ -130,3 +137,8 @@ def analyze(steps):
         if not equivalent:
             return dict(valid=False, first_incorrect_step=index+1, message=message, error_code=error_code, corrected=original)
     return dict(valid=True, first_incorrect_step=None, message='Every equation has the same solution set. Nicely done!', error_code=None, corrected=original)
+
+
+def function_graph(source, minimum=-5, maximum=5):
+    from .advanced_maths import sample_graph
+    return sample_graph(source, minimum, maximum)

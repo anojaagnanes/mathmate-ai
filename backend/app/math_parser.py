@@ -19,7 +19,7 @@ class Parser:
         if not source or len(source) > 200:
             raise MathError('Use an expression of 1–200 characters.')
         source = source.replace('−', '-').replace('×', '*').replace('÷', '/')
-        source = source.replace('²', '^2').replace('³', '^3').replace('√', 'sqrt ')
+        source = source.replace('π', 'pi').replace('²', '^2').replace('³', '^3').replace('√', 'sqrt ')
         self.tokens = []
         self.names = set()
         pos = 0
@@ -27,7 +27,7 @@ class Parser:
         while pos < len(source):
             match = pattern.match(source, pos)
             if not match:
-                raise MathError('Unsupported syntax. Use variables, numbers, + - * /, powers, parentheses or sqrt().')
+                raise MathError('Unsupported syntax. Use variables, numbers, + - * /, powers, parentheses or sqrt(), sin(), cos(), tan(), log(), exp(), pi and E.')
             token = match.group()
             pos = match.end()
             if not token.isspace():
@@ -112,6 +112,15 @@ class Parser:
             if len(self.names) > 3:
                 raise MathError('Use at most three distinct variables in Phase 1.')
             return self.node('symbol', token)
+        if token in ('pi', 'E'):
+            return self.node('constant', token)
+        if token in ('sin', 'cos', 'tan', 'log', 'exp'):
+            if self.take() != '(':
+                raise MathError('Functions require parentheses, for example sin(pi/2).')
+            arg = self.add(depth+1)
+            if self.take() != ')':
+                raise MathError('Functions take one argument; close the parenthesis. log means natural logarithm.')
+            return self.node(token, children=(arg,))
         if token == 'sqrt':
             # The radical consumes one atom: write sqrt(x + 4) for a sum.
             return self.node('sqrt', children=(self.atom(depth+1),))
@@ -121,24 +130,44 @@ class Parser:
                 raise MathError('Number too large: use at most 12 digits and scientific exponents between -12 and 12.')
             return self.node('number', token)
         if token.isalpha():
-            raise MathError(f'{token} is not supported in Phase 1. Use x, y, z, n, a, b, c, t, u, v, theta, alpha, beta or sqrt().')
+            raise MathError(f'{token} is not supported. Use x, y, z, n, a, b, c, t, u, v, theta, alpha, beta or sqrt(), sin(), cos(), tan(), log(), exp(), pi and E.')
         raise MathError('Incomplete or invalid mathematical expression.')
 
 
-def build(node):
+def build(node, conditions):
     if node.kind == 'number':
         return sp.Rational(node.value)
+    if node.kind == 'constant':
+        return sp.pi if node.value == 'pi' else sp.E
     if node.kind == 'symbol':
         return sp.Symbol(node.value, real=True)
-    args = [build(c) for c in node.children]
+    args = [build(c, conditions) for c in node.children]
     if node.kind == 'sign':
         result = args[0] if node.value == '+' else -args[0]
     elif node.kind == 'sqrt':
         if args[0].free_symbols:
-            raise MathError('Phase 1 supports numeric square roots. Roots containing variables need domain tracking in a later phase.')
+            conditions.append(sp.Ge(args[0], 0))
         if args[0].is_negative:
             raise MathError('Complex square roots are outside Phase 1; this solver uses real numbers.')
         result = sp.sqrt(args[0])
+    elif node.kind in ('sin', 'cos', 'tan', 'log', 'exp'):
+        arg = args[0]
+        if not arg.free_symbols and (arg.is_real is not True or abs(arg.evalf()) > 1000):
+            raise MathError('Function argument must be real and have magnitude at most 1000.')
+        if node.kind == 'exp' and not arg.free_symbols and abs(arg.evalf()) > 50:
+            raise MathError('Numeric exp() arguments are limited to magnitude 50.')
+        if node.kind == 'log':
+            if not arg.free_symbols and arg.is_positive is not True:
+                raise MathError('The real logarithm requires a positive argument.')
+            if arg.free_symbols:
+                conditions.append(sp.Gt(arg, 0))
+        if node.kind == 'tan':
+            cosine = sp.cos(arg)
+            if cosine.is_zero:
+                raise MathError('Tangent is undefined when cosine is zero.')
+            if arg.free_symbols:
+                conditions.append(sp.Ne(cosine, 0))
+        result = {'sin': sp.sin, 'cos': sp.cos, 'tan': sp.tan, 'log': sp.log, 'exp': sp.exp}[node.kind](arg)
     elif node.kind in ('/', 'power'):
         exponent = int(node.value) if node.kind == 'power' else -1
         base = args[0] if node.kind == 'power' else args[1]
@@ -169,7 +198,16 @@ def build(node):
     return result
 
 
-def parse(source):
+def parse_defined(source):
     parser = Parser(source)
     tree = parser.parse()
-    return build(tree), parser.names
+    conditions = []
+    value = build(tree, conditions)
+    return value, parser.names, conditions
+
+
+def parse(source):
+    value, names, conditions = parse_defined(source)
+    if conditions:
+        raise MathError('This equation contains a restricted function domain. Use it as an expression or in the function graph; solving it is not supported yet.')
+    return value, names
