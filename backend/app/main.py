@@ -5,6 +5,7 @@ from typing import Annotated
 from PIL import Image, UnidentifiedImageError
 from fastapi import FastAPI, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
@@ -14,7 +15,8 @@ from .db import get_db
 from .models import *
 from .schemas import Register, Login, Equation, Steps, Answer, Chat, Preferences, Graph
 from .security import current_user, csrf, rate_limit, passwords, issue, digest, revoke_family
-from .maths import solve, analyze, expression, MathError, x
+from .math_parser import MathError
+from .math_runtime import solve, analyze, expression
 from .adaptive import recommend
 from .providers import get_provider
 from . import schemas as dto
@@ -129,7 +131,7 @@ def complete(lesson_id: str, user: Student, db: DB):
 
 @app.post(prefix + '/math/solve', response_model=dto.SolutionOut)
 def math_solve(data: Equation, user: Student):
-    return solve(data.equation)
+    return solve(data.equation, data.variable)
 
 
 @app.post(prefix + '/math/validate', response_model=dto.FeedbackOut)
@@ -196,7 +198,7 @@ def submit(question_id: str, data: Answer, user: Student, db: DB):
         raise HTTPException(409, 'This question has already been answered.')
     result = solve(q.equation)
     value = expression(data.answer)
-    if value.has(x):
+    if value.free_symbols:
         raise MathError('Enter a number or fraction, such as 4 or 3/2.')
     correct = value == expression(result['solution'])
     attempt = QuizAttempt(user_id=user.id, question_id=q.id, correct=bool(correct), hinted=q.hinted)
@@ -243,7 +245,7 @@ def save_settings(data: Preferences, user: Student, db: DB):
 
 @app.post(prefix + '/tutor/chat', response_model=dto.ChatOut)
 async def chat(data: Chat, user: Student, db: DB):
-    verified = solve(data.equation)
+    verified = await run_in_threadpool(solve, data.equation, data.variable)
     provider = get_provider()
     try:
         answer = await provider.explain(data.message, verified)

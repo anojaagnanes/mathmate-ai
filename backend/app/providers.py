@@ -18,7 +18,7 @@ class MockAIProvider:
 
     async def explain(self, message, verified):
         steps = verified['steps']
-        if 'why' in message.lower() or 'balance' in message.lower():
+        if verified.get('topic') == 'Linear equation' and ('why' in message.lower() or 'balance' in message.lower()):
             return 'Think of an equation as a balanced scale. Performing the same reversible operation on both sides keeps it balanced. ' + steps[1]['explanation']
         return 'Let’s take this one step at a time. ' + ' '.join(s['explanation'] for s in steps[1:])
 
@@ -48,7 +48,7 @@ class MetaAIProvider:
             return content
 
     async def explain(self, message, verified):
-        return await self.request([{'role': 'developer', 'content': 'You are a kind maths teacher. Explain only the supplied deterministically verified linear equation steps. Do not invent equations, results or claim verification of your prose. Keep your answer under 150 words. Verified data: ' + json.dumps(verified)}, {'role': 'user', 'content': message}])
+        return await self.request([{'role': 'developer', 'content': 'You are a kind maths teacher. Explain only the supplied deterministic maths results and steps, respecting their topic, real domain and verified flag. If verified is false, explain the ambiguity and ask for clarification. Do not invent equations, results or claim verification of your prose. Keep your answer under 150 words. Verified data: ' + json.dumps(verified)}, {'role': 'user', 'content': message}])
 
     async def transcribe(self, image, mime):
         schema = {'type': 'object', 'properties': {'steps': {'type': 'array', 'items': {'type': 'string'}}}, 'required': ['steps'], 'additionalProperties': False}

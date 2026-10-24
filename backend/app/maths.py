@@ -1,132 +1,126 @@
-"""Bounded recursive-descent parser. Student text never reaches eval or sympify."""
-import re
+"""Phase 1 deterministic maths handlers, shared by typed and confirmed image input."""
 import sympy as sp
+from .math_parser import MathError, VARIABLES, parse
 
-x = sp.Symbol('x', real=True)
-
-
-class MathError(ValueError):
-    pass
+x = sp.Symbol('x', real=True)  # Compatibility for existing callers.
 
 
-def expression(source: str):
-    if not source or len(source) > 200:
-        raise MathError('Use an expression of 1–200 characters.')
-    source = source.replace('−', '-').replace('×', '*').replace('÷', '/')
-    if re.search(r'[^0-9x+*/().\-\s]', source):
-        raise MathError('Use numbers, x, parentheses and + - * / only.')
-    tokens = re.findall(r'\d+(?:\.\d+)?|[x+*/().-]', source)
-    if len(tokens) > 100:
-        raise MathError('This expression is too long.')
-    # Insert conventional implicit multiplication (2x, 2(x+1), (x+1)2).
-    expanded = []
-    for t in tokens:
-        if expanded and expanded[-1][0].isdigit() and t[0].isdigit():
-            raise MathError('Put an operator between numbers; for example, 1 + 2.')
-        if expanded and (expanded[-1] == 'x' or expanded[-1] == ')' or expanded[-1][0].isdigit()) and (t == 'x' or t == '(' or t[0].isdigit()):
-            expanded.append('*')
-        expanded.append(t)
-    tokens = expanded
-    i = 0
-
-    def atom(depth=0):
-        nonlocal i
-        if depth > 15 or i >= len(tokens):
-            raise MathError('Incomplete expression or too many nested parentheses.')
-        t = tokens[i]
-        i += 1
-        if t in ('+', '-'):
-            return (1 if t == '+' else -1) * atom(depth + 1)
-        if t == '(':
-            result = add(depth + 1)
-            if i >= len(tokens) or tokens[i] != ')':
-                raise MathError('Close each parenthesis.')
-            i += 1
-            return result
-        if t == 'x':
-            return x
-        if re.fullmatch(r'\d+(?:\.\d+)?', t) and len(t) <= 12:
-            return sp.Rational(t)
-        raise MathError('Unsupported number or expression.')
-
-    def multiply(depth):
-        nonlocal i
-        result = atom(depth)
-        while i < len(tokens) and tokens[i] in ('*', '/'):
-            op = tokens[i]
-            i += 1
-            right = atom(depth)
-            if op == '/':
-                if right == 0:
-                    raise MathError('Division by zero is not defined.')
-                if right.has(x):
-                    raise MathError('Division by a variable expression is outside this lesson.')
-                result /= right
-            else:
-                result *= right
-            if sp.Poly(result, x).degree() > 1:
-                raise MathError('Only linear expressions are supported.')
-        return result
-
-    def add(depth):
-        nonlocal i
-        result = multiply(depth)
-        while i < len(tokens) and tokens[i] in ('+', '-'):
-            op = tokens[i]
-            i += 1
-            right = multiply(depth)
-            result = result + right if op == '+' else result - right
-        return result
-
-    result = sp.expand(add(0))
-    if i != len(tokens):
-        raise MathError('Unexpected symbol. Check your expression.')
-    if sp.Poly(result, x).degree() > 1:
-        raise MathError('Only linear expressions are supported.')
-    return result
+def expression(source):
+    return parse(source)[0]
 
 
 def sides(equation):
     if equation.count('=') != 1:
-        raise MathError('Enter one equation with one equals sign.')
-    return tuple(expression(s) for s in equation.split('='))
+        raise MathError('Enter one equation with one equals sign. Systems and inequalities are later phases.')
+    return tuple(expression(part) for part in equation.split('='))
 
 
-def solve(equation: str):
-    left, right = sides(equation)
-    difference = sp.expand(left - right)
-    a, b = difference.coeff(x), difference.subs(x, 0)
-    steps = [{'equation': equation, 'explanation': 'Start with the original equation.'}]
-    if a == 0:
-        kind = 'infinite' if b == 0 else 'none'
-        steps.append({'equation': f'{b} = 0', 'explanation': 'Both sides are identical, so every real x works.' if b == 0 else 'This is a contradiction, so no value of x works.'})
-        return dict(kind=kind, solution=None, steps=steps, verified=True, latex=sp.latex(left) + '=' + sp.latex(right))
-    answer = -b / a
-    left_constant = left.subs(x, 0)
-    right_constant = right.subs(x, 0)
-    if right.coeff(x):
-        steps.append({'equation': f'{a}*x + ({left_constant}) = {right_constant}', 'explanation': f'Subtract {right.coeff(x)} times x from both sides and collect the x terms.'})
-    steps.extend([
-        {'equation': f'({a}*x + ({left_constant})) - ({left_constant}) = ({right_constant}) - ({left_constant})', 'explanation': f'Subtract {left_constant} from both sides. Doing the same thing to each side keeps the equation balanced.'},
-        {'equation': f'{a}*x = {-b}', 'explanation': 'Simplify both sides. The constant on the left cancels out.'},
-        {'equation': f'({a}*x)/({a}) = ({-b})/({a})', 'explanation': f'Divide both sides by {a}, the nonzero coefficient of x.'},
-        {'equation': f'x = {answer}', 'explanation': 'Simplify the division. You have isolated x!'},
-        {'equation': f'{left.subs(x, answer)} = {right.subs(x, answer)}', 'explanation': f'Substitute x = {answer} into the original equation. Both sides agree.'},
-    ])
-    return dict(kind='unique', solution=str(answer), steps=steps, verified=True, latex=sp.latex(left) + '=' + sp.latex(right))
+def step(value, explanation, latex=None):
+    return {'equation': str(value), 'explanation': explanation, 'latex': latex}
 
 
-def analyze(steps: list[str]):
+def equation_step(left, right, explanation):
+    return step(f'{left} = {right}', explanation, sp.latex(left) + '=' + sp.latex(right))
+
+
+def solve(equation, variable=None):
+    if not equation or len(equation) > 200:
+        raise MathError('Use a question of 1–200 characters.')
+    if variable and variable not in VARIABLES:
+        raise MathError('Choose a supported variable such as x, y, z or n.')
+    if '=' not in equation:
+        value, names = parse(equation)
+        result = sp.expand(value)
+        topic = 'Algebraic expression' if names else 'Arithmetic'
+        return dict(kind='expression', solution=str(result), solutions=[], variable=None,
+                    variables=sorted(names), topic=topic, domain='real', verified=True,
+                    latex=sp.latex(result), steps=[step(equation, 'Read the expression.'),
+                    step(str(result), 'Evaluate exact arithmetic and collect like terms. An expression without an equals sign is simplified, not solved for a variable.', sp.latex(result))])
+    if equation.count('=') != 1:
+        raise MathError('Enter a single equation. Simultaneous equations are planned for Phase 2.')
+    left, left_names = parse(equation.split('=')[0])
+    right, right_names = parse(equation.split('=')[1])
+    names = sorted(left_names | right_names)
+    if variable and names and variable not in names:
+        raise MathError('The selected variable does not occur in this question.')
+    target = variable or (names[0] if len(names) == 1 else None)
+    steps = [equation_step(left, right, 'Start with the original equation.')]
+    base = dict(solution=None, solutions=[], variable=target, variables=names, domain='real',
+                steps=steps, verified=True, latex=sp.latex(left)+'='+sp.latex(right))
+    difference = sp.expand(left-right)
+    if difference == 0 or not difference.free_symbols:
+        kind = 'infinite' if difference == 0 else 'none'
+        steps.append(equation_step(difference, sp.Integer(0), 'Both sides are identical; every real value is allowed.' if kind == 'infinite' else 'This is a contradiction. There are no real solutions.'))
+        return dict(base, kind=kind, topic='Identity' if kind == 'infinite' else 'Contradiction')
+    if len(names) > 1 and not target:
+        steps.append(step(equation, 'One equation with multiple variables does not determine unique numerical values. Choose the variable to express in terms of the others.'))
+        return dict(base, kind='underdetermined', topic='Multivariable equation', verified=False)
+    symbol = sp.Symbol(target, real=True)
+    if not difference.is_polynomial(symbol):
+        raise MathError('Solving roots of variable expressions is not supported yet. Phase 1 solves linear and quadratic polynomial equations.')
+    polynomial = sp.Poly(difference, symbol)
+    degree = polynomial.degree()
+    if degree == 0:
+        raise MathError('The selected variable cancels out; the remaining variables require additional conditions.')
+    if degree > 2:
+        raise MathError('Phase 1 simplifies polynomial expressions up to degree 6, but solves equations only up to degree 2.')
+    if len(names) > 1 and degree != 1:
+        raise MathError('Multivariable quadratic equations require parameter/domain cases not supported in Phase 1.')
+    if degree == 1:
+        a = polynomial.nth(1)
+        if a.free_symbols or a.is_zero is not False:
+            raise MathError('A variable coefficient requires additional conditions. Use a nonzero numeric coefficient for the selected variable.')
+        b = polynomial.nth(0)
+        answer = sp.simplify(-b/a)
+        left_constant = left.subs(symbol, 0)
+        right_constant = right.subs(symbol, 0)
+        if sp.expand(right).coeff(symbol):
+            steps.append(equation_step(a*symbol+left_constant, right_constant, f'Subtract {sp.expand(right).coeff(symbol)} times {target} from both sides and collect the {target} terms.'))
+        steps.append(equation_step(a*symbol, -b, f'Subtract {left_constant} from both sides, then collect like terms.'))
+        steps.append(step(f'({a}*{target})/({a}) = ({-b})/({a})', f'Divide both sides by {a}, the nonzero coefficient of {target}.', r'\frac{'+sp.latex(a*symbol)+'}{'+sp.latex(a)+'}='+r'\frac{'+sp.latex(-b)+'}{'+sp.latex(a)+'}'))
+        steps.append(equation_step(symbol, answer, f'Simplify to isolate {target}.'))
+        verified = sp.simplify(left.subs(symbol, answer)-right.subs(symbol, answer)) == 0
+        steps.append(equation_step(sp.simplify(left.subs(symbol, answer)), sp.simplify(right.subs(symbol, answer)), f'Substitute {target} = {answer} into the original equation. Both sides agree.'))
+        return dict(base, kind='parametric' if len(names)>1 else 'unique', topic='Linear equation', solution=str(answer), solutions=[str(answer)], verified=bool(verified))
+    a, b, c = (polynomial.nth(i) for i in (2, 1, 0))
+    if any(coef.free_symbols for coef in (a,b,c)):
+        raise MathError('Parameterized quadratic equations are outside Phase 1.')
+    discriminant = sp.simplify(b*b-4*a*c)
+    steps.append(equation_step(difference, sp.Integer(0), 'Subtract the right side from both sides and collect powers of the variable.'))
+    steps.append(step(f'D = ({b})^2 - 4*({a})*({c}) = {discriminant}', 'Calculate the discriminant D = b² − 4ac.', 'D='+sp.latex(discriminant)))
+    if discriminant.is_negative:
+        steps.append(step('No real solutions', 'The discriminant is negative, so there are no real roots. Complex-number solving is a later phase.'))
+        return dict(base, kind='none', topic='Quadratic equation')
+    if discriminant.is_nonnegative is not True:
+        raise MathError('Could not establish the discriminant sign safely.')
+    roots = sorted(set([sp.simplify((-b-sp.sqrt(discriminant))/(2*a)), sp.simplify((-b+sp.sqrt(discriminant))/(2*a))]), key=sp.default_sort_key)
+    factored = sp.factor(difference)
+    if factored != difference:
+        steps.append(equation_step(factored, sp.Integer(0), 'Factor the polynomial. A product is zero when at least one factor is zero.'))
+    steps.append(step(f'{target} = (-({b}) ± sqrt({discriminant})) / (2*({a}))', 'Apply the quadratic formula to obtain all real roots.', sp.latex(symbol)+r'=\frac{-('+sp.latex(b)+r')\pm\sqrt{'+sp.latex(discriminant)+r'}}{2('+sp.latex(a)+')}'))
+    verified = True
+    for root in roots:
+        steps.append(equation_step(symbol, root, 'Simplify this exact root.'))
+        l, r = sp.simplify(left.subs(symbol, root)), sp.simplify(right.subs(symbol, root))
+        verified = verified and sp.simplify(l-r) == 0
+        steps.append(equation_step(l, r, f'Substitute {target} = {root} into the original equation. Both sides agree.'))
+    return dict(base, kind='unique' if len(roots)==1 else 'multiple', topic='Quadratic equation', solution=str(roots[0]) if len(roots)==1 else None, solutions=[str(r) for r in roots], verified=bool(verified))
+
+
+def analyze(steps):
     original = solve(steps[0])
-    for index, step in enumerate(steps[1:], 1):
+    if original['kind'] in ('expression', 'underdetermined', 'parametric'):
+        raise MathError('Step checking currently requires single-variable linear or quadratic equations.')
+    variable = original['variable']
+    for index, text in enumerate(steps[1:], 1):
         try:
-            current = solve(step)
-            equivalent = current['kind'] == original['kind'] and current['solution'] == original['solution']
+            current = solve(text, variable)
+            equivalent = current['kind'] == original['kind'] and current['solutions'] == original['solutions']
             message = 'This step changes the solution set. Apply the same reversible operation to both sides.'
             error_code = 'changed_solution'
             if not equivalent:
-                prev_left, prev_right = sides(steps[index - 1])
-                next_left, next_right = sides(step)
+                prev_left, prev_right = sides(steps[index-1])
+                next_left, next_right = sides(text)
                 if (prev_left == next_left) != (prev_right == next_right):
                     message = 'Only one side changed. Keep the equation balanced by applying the same operation to both sides.'
                     error_code = 'one_side_changed'
@@ -134,5 +128,5 @@ def analyze(steps: list[str]):
             equivalent, message = False, str(exc)
             error_code = 'division_by_zero' if 'zero' in message else 'unsupported_input'
         if not equivalent:
-            return dict(valid=False, first_incorrect_step=index + 1, message=message, error_code=error_code, corrected=original)
+            return dict(valid=False, first_incorrect_step=index+1, message=message, error_code=error_code, corrected=original)
     return dict(valid=True, first_incorrect_step=None, message='Every equation has the same solution set. Nicely done!', error_code=None, corrected=original)

@@ -8,7 +8,7 @@ def test_solutions(equation, kind, value):
     assert (result['kind'], result['solution']) == (kind, value)
 
 
-@pytest.mark.parametrize('source', ['__import__("os")', 'x**2', 'x*x', '1/0', 'x/(x-1)', 'sin(x)', 'x^2', 'x;', '1..2', '1 2', '1.2 3.4', '1e100', '('*30+'x'+')'*30, '123456789012345', 'x +', ''])
+@pytest.mark.parametrize('source', ['__import__("os")', '1/0', 'x/(x-1)', 'sin(x)', 'x;', '1..2', '1 2', '1.2 3.4', '1e100', '('*30+'x'+')'*30, '123456789012345', 'x +', ''])
 def test_restricted_parser(source):
     with pytest.raises(MathError):
         expression(source)

@@ -8,8 +8,8 @@ import { api, post } from '@/lib/api';
 import { encouragement, type TeacherState } from '@/lib/teacher-state';
 import { Button } from './ui/button';
 const Avatar = dynamic(() => import('./teacher-avatar'), {ssr: false, loading: () => <div className="teacher-3d avatar-fallback">Opening Mia’s studio…</div>});
-export function Teacher({equation, transcript, reaction, onSpeaking, onNext, voiceProvider, stepNumber}: {
-  stepNumber?: number; voiceProvider?: VoiceProvider; equation: string; transcript: string; reaction?: 'correct' | 'incorrect'; onSpeaking?: (speaking: boolean) => void; onNext?: () => void;
+export function Teacher({equation, transcript, reaction, onSpeaking, onNext, voiceProvider, stepNumber, variable}: {
+  variable?: string; stepNumber?: number; voiceProvider?: VoiceProvider; equation: string; transcript: string; reaction?: 'correct' | 'incorrect'; onSpeaking?: (speaking: boolean) => void; onNext?: () => void;
 }) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voice, setVoice] = useState('');
@@ -103,7 +103,7 @@ export function Teacher({equation, transcript, reaction, onSpeaking, onNext, voi
     {understood && <p className="info-box">Does that make sense? We can pause here as long as you need.</p>}
     <div className="actions"><Button variant="outline" onClick={simpler}>Explain more slowly</Button>{onNext && <Button onClick={() => {stop(); onNext();}}>I understand · next step</Button>}</div>
     <hr/><div className="chat-reply" aria-live="polite"><span className="eyebrow">{mode}</span><p>{reply}</p><button className="text-button" disabled={(!available && !voiceProvider) || muted} onClick={() => speak(reply, false, false)}>Read Mia’s response</button></div>
-    <form onSubmit={async e => {e.preventDefault(); stop(); setState('thinking'); setError(''); try {const result = await post<{message: string; mode: string}>('/tutor/chat', {equation, message}); if (mounted.current) {setReply(result.message); setMode(result.mode); setMessage(''); setState('encouraging');}} catch(e) {if (mounted.current) {setError((e as Error).message); setState('idle');}}}}><label className="sr-only" htmlFor="chat">Ask your tutor</label><div className="chat-input"><input id="chat" placeholder="I’m confused about this step…" value={message} onChange={e => setMessage(e.target.value)} onFocus={() => {if (!['explaining','thinking'].includes(state)) setState('listening');}} onBlur={() => {if (state === 'listening') setState('idle');}} maxLength={2000} required/><button className="icon-button" aria-label="Send message" disabled={state === 'thinking'}><Send size={17}/></button></div></form>
+    <form onSubmit={async e => {e.preventDefault(); stop(); setState('thinking'); setError(''); try {const result = await post<{message: string; mode: string}>('/tutor/chat', {equation, message, variable}); if (mounted.current) {setReply(result.message); setMode(result.mode); setMessage(''); setState('encouraging');}} catch(e) {if (mounted.current) {setError((e as Error).message); setState('idle');}}}}><label className="sr-only" htmlFor="chat">Ask your tutor</label><div className="chat-input"><input id="chat" placeholder="I’m confused about this step…" value={message} onChange={e => setMessage(e.target.value)} onFocus={() => {if (!['explaining','thinking'].includes(state)) setState('listening');}} onBlur={() => {if (state === 'listening') setState('idle');}} maxLength={2000} required/><button className="icon-button" aria-label="Send message" disabled={state === 'thinking'}><Send size={17}/></button></div></form>
     {error && <p role="status" className="info-box">{error}</p>}
   </aside>;
 }

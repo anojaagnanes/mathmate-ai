@@ -14,7 +14,8 @@ class Login(BaseModel):
 
 
 class Equation(BaseModel):
-    equation: str = Field(min_length=3, max_length=200)
+    equation: str = Field(min_length=1, max_length=200)
+    variable: str | None = Field(default=None, max_length=5)
 
 
 class Steps(BaseModel):
@@ -54,10 +55,16 @@ class AuthOut(BaseModel):
 class SolutionStep(BaseModel):
     equation: str
     explanation: str
+    latex: str | None = None
 
 
 class SolutionOut(BaseModel):
-    kind: Literal['unique', 'none', 'infinite']
+    kind: Literal['unique', 'none', 'infinite', 'multiple', 'expression', 'underdetermined', 'parametric']
+    solutions: list[str] = Field(default_factory=list)
+    variable: str | None = None
+    variables: list[str] = Field(default_factory=list)
+    topic: str = 'Linear equation'
+    domain: str = 'real'
     solution: str | None
     steps: list[SolutionStep]
     verified: bool
