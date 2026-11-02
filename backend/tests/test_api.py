@@ -59,7 +59,27 @@ def test_end_to_end_api_persistence(client, auth):
     assert client.put('/api/v1/settings', json={'muted': True, 'voice': 'test'}, headers=auth).status_code == 200
     assert client.get('/api/v1/settings', headers=auth).json()['muted']
     chat = client.post('/api/v1/tutor/chat', json={'equation': '2x+3=11', 'message': 'Why?'}, headers=auth)
-    assert 'not AI inference' in chat.json()['mode']
+    assert chat.json()['mode'] == 'Mia'
+
+
+def test_transcription_failure_names_its_cause(client, auth, monkeypatch):
+    image = io.BytesIO()
+    Image.new('RGB', (64, 64), 'white').save(image, format='PNG')
+    body = {'file': ('work.png', image.getvalue(), 'image/png')}
+    off = client.post('/api/v1/handwriting/upload', files=body, headers=auth).json()
+    assert off['mode'] == 'manual' and 'off on this device' in off['message']
+    async def boom(self, image, mime):
+        raise RuntimeError('vision exploded')
+    monkeypatch.setattr('app.main.meta_active', lambda: True)
+    import app.agents.vision as vision
+    monkeypatch.setattr(vision.VisionAgent, 'extract', boom)
+    failed = client.post('/api/v1/handwriting/upload', files=body, headers=auth).json()
+    assert failed['mode'] == 'manual' and 'could not read this image' in failed['message']
+    async def capped(self, image, mime):
+        raise RuntimeError('Answer usage limit reached; answering with built-in explanations.')
+    monkeypatch.setattr(vision.VisionAgent, 'extract', capped)
+    limited = client.post('/api/v1/handwriting/upload', files=body, headers=auth).json()
+    assert limited['mode'] == 'manual' and 'usage limit reached' in limited['message']
 
 
 def test_ownership(client, auth):

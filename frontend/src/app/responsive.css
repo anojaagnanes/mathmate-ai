@@ -1,0 +1,54 @@
+/* MathMate AI · Responsive pass: mobile 320px+, tablet, desktop.
+   Additive only — preserves the existing design, features, APIs and data. */
+
+/* Contain absolute decorations; clip (not hidden) keeps sticky working. */
+html,body{overflow-x:clip}
+@supports not (overflow:clip){html,body{overflow-x:hidden}}
+
+/* Flex rows wrap instead of overflowing narrow screens. */
+.row{flex-wrap:wrap}
+.row>*{min-width:0}
+.balance{flex-wrap:wrap}
+
+/* iOS toolbar-safe viewport units, with fallback. */
+.auth-page,.loading-page,.app-shell{min-height:100vh;min-height:100dvh}
+
+/* Long equations scroll inside their board instead of breaking layout. */
+.quiz-equation,.graph-equation{max-width:100%;overflow-x:auto}
+.sample-step{min-width:0}
+.sample-step>div{min-width:0;flex:1;overflow-x:auto}
+.stats strong{overflow-wrap:anywhere}
+
+/* Skip link: invisible until keyboard-focused. */
+.skip-link{position:absolute;left:12px;top:-52px;z-index:50;background:#17123f;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600}
+.skip-link:focus-visible{top:12px;outline:3px solid #fff;outline-offset:2px}
+
+/* Crop resize handle (geometry moved out of inline styles for touch sizing). */
+.crop-handle{position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;border-radius:50%;background:#6846e8;border:2px solid #fff;cursor:nwse-resize;touch-action:none}
+
+/* Touch devices: larger controls. */
+@media(pointer:coarse){
+  .app-shell input[type=range]{min-height:44px;cursor:pointer}
+  .app-shell input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:#d9d2ec}
+  .app-shell input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;margin-top:-11px;border-radius:50%;background:#fff;border:2px solid var(--purple);box-shadow:0 1px 4px #1c2a4a33}
+  .app-shell input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:#d9d2ec}
+  .app-shell input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:2px solid var(--purple)}
+  .unified-composer .composer-icon{flex-basis:44px;width:44px;min-height:44px}
+  .unified-composer .composer-attachment .composer-icon{flex-basis:40px;width:40px;min-height:40px}
+  .crop-handle{right:-15px;bottom:-15px;width:30px;height:30px}
+}
+
+@media(max-width:600px){
+  /* Sticky nav stays reachable while scrolling. */
+  .sidebar{position:sticky;top:0}
+  /* Fixed heights would clip wrapped header content. */
+  .app-header{height:auto;min-height:51px;padding:8px 18px;row-gap:6px}
+  .page-heading{flex-wrap:wrap}
+  /* iOS zooms on focus when inputs are under 16px. */
+  .app-shell input:not([type=checkbox]):not([type=range]):not([type=file]):not([type=button]):not([type=submit]),
+  .app-shell textarea,
+  .app-shell select,
+  .auth-card input:not([type=checkbox]):not([type=submit]),
+  .auth-card select{font-size:16px}
+  .lesson-nav button{font-size:12px;min-height:40px}
+}

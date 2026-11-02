@@ -125,6 +125,7 @@ class SolutionFeedback(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), index=True)
     upload_id: Mapped[str | None] = mapped_column(ForeignKey('uploaded_solutions.id'), nullable=True)
     result: Mapped[dict] = mapped_column(JSON)
+    submitted_at: Mapped[int | None] = mapped_column(BigInteger, default=time.time_ns, nullable=True, index=True)
 
 
 class TopicMastery(Base):
@@ -141,3 +142,99 @@ class LearningRecommendation(Base):
     __tablename__ = 'learning_recommendations'
     user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), primary_key=True)
     reason: Mapped[str] = mapped_column(String(500))
+
+
+class TutorSession(Base):
+    __tablename__ = 'tutor_sessions'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), index=True)
+    language: Mapped[str] = mapped_column(String(2), default='en')
+    mode: Mapped[str] = mapped_column(String(20), default='classroom')
+    step_index: Mapped[int] = mapped_column(default=0)
+    question: Mapped[str] = mapped_column(String(2000), default='')
+    verified_solution: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    pace: Mapped[str] = mapped_column(String(10), default='normal')
+    method: Mapped[str] = mapped_column(String(20), default='default')
+    mistake_focus: Mapped[str] = mapped_column(String(100), default='')
+    created: Mapped[int] = mapped_column(default=lambda: int(time.time()))
+    updated: Mapped[int] = mapped_column(default=lambda: int(time.time()))
+
+
+class TutorTurn(Base):
+    __tablename__ = 'tutor_turns'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    session_id: Mapped[str] = mapped_column(ForeignKey('tutor_sessions.id'), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), index=True)
+    role: Mapped[str] = mapped_column(String(10))
+    message: Mapped[str] = mapped_column(String(4000))
+    language: Mapped[str] = mapped_column(String(2), default='en')
+    step_index: Mapped[int] = mapped_column(default=0)
+    created: Mapped[int] = mapped_column(default=lambda: int(time.time()))
+
+
+class MiaProfile(Base):
+    __tablename__ = 'mia_profiles'
+    user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), primary_key=True)
+    language: Mapped[str] = mapped_column(String(2), default='en')
+    pace: Mapped[str] = mapped_column(String(10), default='normal')
+    voice_rate: Mapped[float] = mapped_column(default=0.88)
+    updated: Mapped[int] = mapped_column(default=lambda: int(time.time()))
+
+
+class MiaTrace(Base):
+    __tablename__ = 'mia_traces'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    session_id: Mapped[str] = mapped_column(ForeignKey('tutor_sessions.id'), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), index=True)
+    turn: Mapped[int] = mapped_column(default=0)
+    step: Mapped[int] = mapped_column(default=0)
+    kind: Mapped[str] = mapped_column(String(12))
+    content: Mapped[dict] = mapped_column(JSON)
+    created: Mapped[int] = mapped_column(default=lambda: int(time.time()))
+
+
+class Mission(Base):
+    __tablename__ = 'missions'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), index=True)
+    goal: Mapped[str] = mapped_column(String(300))
+    topic: Mapped[str] = mapped_column(String(40))
+    error_code: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    state: Mapped[str] = mapped_column(String(10), default='active')
+    difficulty: Mapped[int] = mapped_column(default=1)
+    exit_wins: Mapped[int] = mapped_column(default=3)
+    max_drills: Mapped[int] = mapped_column(default=10)
+    max_replans: Mapped[int] = mapped_column(default=2)
+    drills_done: Mapped[int] = mapped_column(default=0)
+    correct_count: Mapped[int] = mapped_column(default=0)
+    consecutive: Mapped[int] = mapped_column(default=0)
+    replans: Mapped[int] = mapped_column(default=0)
+    current: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    example: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    drills: Mapped[list] = mapped_column(JSON, default=list)
+    trace: Mapped[list] = mapped_column(JSON, default=list)
+    accuracy_before: Mapped[float] = mapped_column(default=0)
+    verdict: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created: Mapped[int] = mapped_column(default=lambda: int(time.time()))
+    updated: Mapped[int] = mapped_column(default=lambda: int(time.time()))
+
+
+class Journey(Base):
+    __tablename__ = 'journeys'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), index=True)
+    state: Mapped[str] = mapped_column(String(10), default='active')
+    island_index: Mapped[int] = mapped_column(default=0)
+    islands: Mapped[list] = mapped_column(JSON, default=list)
+    gems_needed: Mapped[int] = mapped_column(default=3)
+    max_per_island: Mapped[int] = mapped_column(default=8)
+    questions_done: Mapped[int] = mapped_column(default=0)
+    correct_count: Mapped[int] = mapped_column(default=0)
+    assists: Mapped[int] = mapped_column(default=0)
+    current: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    log: Mapped[list] = mapped_column(JSON, default=list)
+    trace: Mapped[list] = mapped_column(JSON, default=list)
+    accuracy_before: Mapped[float] = mapped_column(default=0)
+    verdict: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created: Mapped[int] = mapped_column(default=lambda: int(time.time()))
+    updated: Mapped[int] = mapped_column(default=lambda: int(time.time()))

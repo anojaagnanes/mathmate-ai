@@ -19,6 +19,6 @@ def test_migrations_preserve_existing_records(tmp_path, monkeypatch):
     with engine.connect() as connection:
         assert connection.scalar(text('SELECT name FROM users')) == 'Preserved'
         assert connection.scalar(text('SELECT submitted_at FROM quiz_attempts')) == 1700000000000000000
-        assert connection.scalar(text('SELECT version_num FROM alembic_version')) == '0002'
-    assert len(inspect(engine).get_table_names()) == 17  # 16 app tables plus alembic_version
+        assert connection.scalar(text('SELECT version_num FROM alembic_version')) == '0006'
+    assert len(inspect(engine).get_table_names()) == 22  # 21 app tables plus alembic_version
     engine.dispose()

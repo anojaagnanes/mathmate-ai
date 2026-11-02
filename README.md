@@ -1,127 +1,188 @@
 # MathMate AI — Adaptive Visual Maths Tutor
 
-A local full-stack hackathon MVP built with Next.js App Router, strict TypeScript, FastAPI, SQLAlchemy, and a bounded SymPy algebra engine. All project source is in this workspace. No real Meta inference or OCR is claimed without a configured and tested provider.
+**Don't just solve it. Understand it.**
 
-## Start locally on Windows
+MathMate AI is a **verification-first, misconception-aware maths learning application** built to help students understand *why* a solution works—not simply copy an answer. Students can check handwritten work, explore maths visually, and follow personalised practice missions with **Mia**, a 3D AI teaching companion. The experience supports **English and Tamil**.
 
-Requires Node.js 20.9+ (24 recommended) and Python 3.13 or 3.14.
+Developed for the **Meta Global AI Developer Hackathon 2026**, with a documented pre-hackathon baseline and hackathon-stage additions.
+
+> **The principle:** Meta Muse Spark can help interpret and explain. A bounded SymPy-based engine is responsible for mathematical verification and verdicts.
+
+## Demo & documentation
+
+- **Demo video:** Add the YouTube URL here once the final demo has been uploaded.
+- **Screenshots:** Add screenshots or a short GIF of Check My Work, Mastery Mission, and Mia Learning Studio when ready.
+- **Architecture diagrams:** [Project architecture](docs/project-architecture.svg) · [System design](docs/system-design.svg)
+- **Technical details:** [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Hackathon work log:** [HACKATHON_BUILD.md](HACKATHON_BUILD.md)
+- **Demo plan:** [DEMO_VIDEO_SCRIPT.md](DEMO_VIDEO_SCRIPT.md)
+
+## Why MathMate AI?
+
+A student can be told an answer is wrong without understanding *where the reasoning failed*. MathMate AI connects **verified step-by-step feedback** with guided explanation and practice based on past mistakes.
+
+## Three core experiences
+
+### 1. Check My Work — see where reasoning breaks
+
+Students upload handwritten work or a PDF/DOCX worksheet, review the extracted transcription, and confirm the maths before grading. The verification engine checks successive lines and identifies the **first incorrect step**. Mia can then teach from the verified review; fraction misconceptions can lead to hands-on exploration in the Fraction Lab.
+
+### 2. Autonomous Mastery Mission — practise the actual weakness
+
+The mission reads verified mistake and quiz history, selects a target, shows a worked example, adapts drills and difficulty, and records its decisions in an **agent trace**. A role-reversal round can ask students to spot a deliberately incorrect line. The loop has explicit mastery and stop conditions rather than running indefinitely. Its routing and difficulty decisions are principally **rule-based**, using verified results rather than a separately trained learning model.
+
+### 3. Mia Learning Studio — learn visually, in English or Tamil
+
+Mia guides supported problems using a step-by-step KaTeX whiteboard, narration, follow-up explanations and real-world examples. The 3D teacher adds expression and gestures; mathematics remains subject to independent verification.
+
+### Beyond the core
+
+- **Math Treasure Journey:** A five-stage, gamified journey with gems, hints and a final stage informed by the learner's recorded weak topic.
+- **Graph Playground:** Interactive function graphs and slope/intercept exploration.
+- **Practice & Grow:** Server-graded quizzes, hints and adaptive difficulty.
+- **My Progress:** Saved reviews, accuracy and topic-level learning history.
+
+
+## Explore the app
+
+| Area | Experience |
+|---|---|
+| Home | Topic explorer and learning entry points |
+| Learning Studio | Whiteboard solutions, Mia narration and guided visuals |
+| Graph Playground | Interactive graphs and slope/intercept exploration |
+| Practice & Grow | Server-graded quizzes with hints |
+| Mastery Mission | Mistake-driven adaptive practice and visible trace |
+| Math Treasure Journey | Five-stage gamified learning route |
+| Check My Work | Handwriting/document confirmation and step review |
+| My Progress | Learning history, reviews and accuracy |
+| Settings | Profile, English/Tamil narration and voice preferences |
+
+## What makes it different
+
+| A basic question-and-answer chatbot | MathMate AI |
+|---|---|
+| May produce a mathematical answer directly | Routes supported maths through a restricted symbolic verifier |
+| Responds to individual prompts | Connects verified mistakes to targeted multi-step missions |
+| Often lacks a verifiable grading trail | Shows the first incorrect line and a mission decision trace |
+| Primarily text-based | Combines confirmed handwriting, fraction manipulation, whiteboard and 3D narration |
+
+**Meta AI tooling:** Muse Spark contributes interpretation, transcription drafts, context-aware explanations and selected practice/wording drafts. Structured outputs and tool interfaces are bounded by validation. **SymPy, not Meta, decides mathematical correctness.** Provider labels, usage budgets and explicit local fallback make the model boundary inspectable. Not every autonomous action uses Meta: the mission and journey controllers are primarily deterministic, as documented in [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## How it works
+
+```text
+Student question / uploaded work
+          |
+          v
+   Next.js frontend
+          |
+          v
+      FastAPI API
+       /    |    \
+      /     |     \
+SymPy maths  AI provider  Student data
+verification Muse Spark  SQLite (local)
+             or local   PostgreSQL (target)
+             fallback
+```
+
+The **maths verification engine** checks supported expressions and steps. **Meta Muse Spark**, where enabled and available, contributes language-oriented capabilities such as explanation and transcription drafts. Students confirm extracted work before verification. When the model is unavailable or budget-capped, the UI identifies the local fallback rather than attributing its output to Meta.
+
+For the detailed provider boundary, agent flows, security and budget handling, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Tech stack
+
+| Layer | Stack |
+|---|---|
+| Frontend | Next.js 16, React 19, TypeScript, KaTeX, JSXGraph, Recharts, React Three Fiber |
+| Backend | Python, FastAPI, SQLAlchemy, Alembic, Pydantic, SymPy |
+| AI | Meta Muse Spark via Baseten; labeled local/mock fallback |
+| Data | SQLite for local development; PostgreSQL 17 configuration/target |
+| 3D teacher | Three.js and React Three Fiber with browser speech synthesis |
+
+## Getting started — Windows
+
+**Requirements:** Node.js 22.13+ (Node 24 recommended), Python 3.13 or 3.14.
+
+From the project root, run:
 
 ```powershell
-# From the mathmate-ai project root
 powershell -ExecutionPolicy Bypass -File scripts/setup-local.ps1
 ```
 
-The setup creates an ignored `backend/.env` with a random signing key, installs dependencies, runs Alembic, and seeds three lessons. It preserves existing configuration and records. SQLite is the local fallback so Docker is optional for development.
-
-Run these in **two terminals**:
+Start the backend and frontend **in separate PowerShell terminals**:
 
 ```powershell
+# Terminal 1 — from project root
 cd backend
 .venv/Scripts/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 ```powershell
+# Terminal 2 — from project root
 cd frontend
 npm run dev
 ```
 
-Open **http://localhost:3000**. Use exactly that hostname because the default CSRF origin is `http://localhost:3000`. Create your own account; there are no seeded passwords. API documentation: http://127.0.0.1:8000/docs.
+Open **http://localhost:3000** and register a local account. API documentation: **http://127.0.0.1:8000/docs**.
 
-If Python's `venv` cannot bootstrap pip, the setup also supports an existing virtual environment using the system pip's `--python` option. Manual equivalent:
+Never commit `backend/.env`, API keys, or `backend/meta_usage.db`. See [ARCHITECTURE.md](ARCHITECTURE.md) for configuration and budget controls.
+
+## Adding your Meta API key
+
+The repository ships **without any API key** (`backend/.env` is gitignored and never committed). Without one the app still runs fully — every Meta feature degrades to clearly labeled local behavior. To enable live Meta inference after cloning:
+
+1. Get a key from **Baseten** (recommended — model `meta-models/muse-spark-open-1026`) or **direct Meta** (`muse-spark-1.3`).
+2. Copy the template and edit it:
 
 ```powershell
-python -m venv --without-pip backend/.venv
-python -m pip --python backend/.venv/Scripts/python.exe install -r backend/requirements.lock.txt
+copy backend\.env.example backend\.env
 ```
 
-## PostgreSQL with Docker
+3. In `backend/.env`, set:
 
-Start Docker Desktop's Linux engine. Copy `.env.example` to `.env` and set a random `JWT_SECRET` and a strong URL-safe `POSTGRES_PASSWORD`. Do not use the example placeholders. Use alphanumeric database passwords or URL-encode reserved URL characters in the connection URL.
-
-```powershell
-docker compose up --build
+```env
+AI_PROVIDER=meta
+META_ENABLED=true
+BASETEN_API_KEY=paste-your-key-here   # or MODEL_API_KEY=... for direct Meta
+META_REQUEST_BUDGET=250               # deliberate cap; 0 fails closed
+META_TOKEN_BUDGET=18000000
 ```
 
-The backend waits for PostgreSQL, applies the migration, seeds lessons, then serves the API. The frontend proxies `/api/v1` to the backend. PostgreSQL data persists in a named volume. Do not run `docker compose down -v` unless you intend to delete that database.
+For direct Meta instead of Baseten, also set `META_HOST=meta` and `META_MODEL=muse-spark-1.3`.
 
-For a public deployment, configure HTTPS, `SECURE_COOKIES=true`, an exact `FRONTEND_ORIGIN`, unique secrets, and proxy rate/body limits. The in-memory authentication rate limiter is intended for a single-process MVP; use a shared limiter for multiple workers. There is no email verification, password reset, or account deletion flow in this milestone.
+4. Restart the backend. Verify at http://127.0.0.1:8000/docs → `GET /api/v1/tutor/status` (`configured: true`); the app header pill switches from "Local engine" to "Meta Muse Spark".
 
-## Implemented
+Usage is logged per call in ignored `backend/meta_usage.db`. Budgets estimate spend and do not guarantee zero charges.
 
-- Landing, registration, login, protected dashboard, topic explorer, studio, graphs, quizzes, work review, progress, and narration settings.
-- Argon2 password hashing; 15-minute JWTs held in browser memory; HttpOnly SameSite refresh cookies; one-time refresh rotation; reuse detection and logout family invalidation; origin plus custom-header CSRF checks.
-- User ownership on private API resources; private data never included in anonymous server-rendered app HTML.
-- Linear equations with integer/decimal/fraction coefficients and implicit multiplication. Safe recursive-descent parsing without `eval`, `sympify(student_text)`, or arbitrary function calls.
-- Unique/no/infinite solutions; division-by-zero rejection; bounded syntax; solution-set equivalence and first incorrect line detection.
-- KaTeX whiteboard with step navigation, narration transcript, and lesson completion.
-- JSXGraph slope/intercept playground; numerical graph API; Recharts learning history.
-- Server-owned quiz questions and hints, immutable submitted attempts, deterministic scoring, topic difficulty, recent accuracy, and explained recommendations.
-- PNG/JPEG/WebP validation, bounded image dimensions and size, editable transcription with explicit confirmation, saved feedback, and manual fallback.
-- AIProvider interface, labeled MockAIProvider, documented MetaAIProvider using HTTPX, timeout handling and fallback. See `docs/meta-integration.md`.
-- Browser voice selection, play/replay, pause/resume, stop, mute, and step-change cancellation. Mia uses a licensed Microsoft Rocketbox-derived rigged 3D human model, rendered with React Three Fiber. Blinking, head motion, smiles, breathing and approximate speech-driven jaw movement accompany lesson and quiz states. See docs/teacher-3d.md for asset licensing and voice limitations.
-- All 16 requested data tables, frozen initial Alembic migration, non-destructive timestamp migration, repeatable seed, Docker manifests, and CI workflow.
-- Profile-name editing, saved lesson-session starts, typed response contracts, categorized mistakes, and an explicit provider-configuration status endpoint.
-
-The workspace uses tabs within `/app` for its authenticated screens. API authorization is enforced on every protected endpoint; client navigation is not the security boundary. Access tokens are never stored in localStorage.
-
-## Tests and builds
+## Verification & tests
 
 ```powershell
+# Backend
 cd backend
 .venv/Scripts/python -m pytest -q
 ```
 
 ```powershell
+# Frontend
 cd frontend
-npm run build
 npm run typecheck
-```
-
-Tests exercise algebra attacks and edge cases, valid/invalid transformations, authentication rotation/replay/logout, CSRF, ownership, scoring, adaptive rules, uploads, confirmation, saved progress, and an API-level learning journey. Test databases are isolated in memory. See `docs/verification.md` for actual results and environment limitations.
-
-## Demo route
-
-1. Register → dashboard → The art of balance.
-2. Explore `2x + 3 = 11`; advance through the steps; play narration; complete the lesson.
-3. Move slope and intercept in Graph playground.
-4. Complete practice questions; use a hint; inspect My progress.
-5. Check my work → enter `2x+3=11`, `2x=8`, `x=5` on separate lines → confirm → see line 3 flagged and the corrected result.
-6. Optionally upload a real photo. Without Meta configured, manually transcribe it; the UI does not claim OCR occurred.
-
-## Scope and next milestone
-
-This is a verified local MVP, not a production deployment. Remaining external gates are a real Meta text/vision integration test with credentials and PostgreSQL/Docker runtime verification. Higher-fidelity facial performance, phoneme-timed lip synchronization, password recovery/email verification, distributed rate limiting, and a formal accessibility audit remain future work. The current teacher is real rigged 3D geometry with procedural motion, not a video or flat illustration. The validator compares equation solution sets and gives a specific explanation when only one side changes; it does not infer every possible student operation. Final substitution checks are intentionally separate from equivalent-equation transformations. Raw handwritten photos are not retained or retrievable.
-
-AI chat currently has one request's verified equation context; messages are saved but multi-turn conversational history retrieval is not yet exposed. Progress uses recent accuracy, not a claim of inferred long-term mastery. No third-party service has been deployed by this task.
-
-## Production build and local preview
-
-```powershell
-cd frontend
+node --experimental-strip-types --test scripts/test-*.mjs
 npm run build
-npm run start
 ```
 
-The build uses webpack because Turbopack failed launching its CSS worker on this Windows machine. The start helper serves Next's standalone output and copies its static assets. Start the backend separately as shown above. Use `http://localhost:3000` for browser access even when the server prints `127.0.0.1`.
+**Last reported in the supplied project documentation:** 432 backend tests passed, 1 skipped; 41 frontend checks, typecheck and build passed. These figures should be refreshed from the latest local CI/test run before publishing.
 
-Backend dependencies are frozen in `backend/requirements.lock.txt`; the direct dependency ranges remain in `backend/requirements.txt`. The frontend uses `package-lock.json`. No lint script was configured; production compilation and strict TypeScript checking are the frontend checks.
+## Scope and limitations
 
-## Optional PostgreSQL verification
+This is a **locally verified prototype**, not a production deployment. Its documented maths scope emphasises linear equations, fractions and basic graphs. Extracted handwriting must be confirmed; the avatar's lip-sync is approximate. Long-term learning gains have not been established through a formal learner study. Deployment hardening and formal accessibility testing remain future work.
 
-The Docker engine was unavailable during local verification. An offline PostgreSQL migration script is included in `docs/postgres-schema.sql`; it is a static check, not proof of a live database connection. The CI PostgreSQL job runs migrations and a persistence test against PostgreSQL 17. CI has been configured but has not been run remotely.
+## Hackathon provenance
 
-To run that test locally with a PostgreSQL account permitted to create schemas:
+Authentication, persistence, deterministic maths, quizzes, OCR review and base pages existed before the hackathon baseline. Hackathon-stage work includes Meta provider agents and budgets, validated practice drafts, Mastery Mission, Treasure Journey and additional bilingual/visual learning features. For dates and boundaries, see [HACKATHON_BUILD.md](HACKATHON_BUILD.md).
 
-```powershell
-cd backend
-$env:TEST_POSTGRES_URL='postgresql+psycopg://user:password@localhost/test_database'
-.venv/Scripts/python -m pytest tests/test_postgres.py -q
-```
+## License and assets
 
-It creates and removes only a uniquely named temporary schema. It never drops existing application schemas. Without `TEST_POSTGRES_URL`, this test reports a skip.
+Project license: MIT. The teacher avatar derives from Microsoft Rocketbox `Female_Adult_07`; see [ROCKETBOX-LICENSE.md](frontend/public/models/mia/ROCKETBOX-LICENSE.md). Other asset attributions are recorded in the project documentation.
 
-Your existing SQLite file was backed up under ignored `backend/backups/` before migration `0002`. Existing rows were preserved. Local browser QA created a test account (`demo.qa.20261023@example.com`) and saved lesson/quiz/review records; those records were not deleted.
-
-## Repository
-
-`frontend/src/app` — routes and styling; `frontend/src/components` — learning UI; `backend/app` — API, security, maths, providers, models; `backend/tests` — test suite; `backend/alembic` — migrations; `scripts` — local setup; `docs` — integration and verification notes.
+© 2026 MathMate AI · Meta Global AI Developer Hackathon 2026

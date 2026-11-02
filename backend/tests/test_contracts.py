@@ -19,7 +19,7 @@ def test_profile_sessions_and_status(client, auth):
     assert 'rules' in client.get('/api/v1/recommendations', headers=auth).json()['algorithm']
     status = client.get('/api/v1/tutor/status', headers=auth).json()
     assert status['configured'] is False
-    assert 'MODEL_API_KEY' in status['message']
+    assert 'API key' in status['message']
 
 
 def test_api_output_contracts(client, auth):
@@ -67,12 +67,13 @@ def test_meta_transcription_contract(monkeypatch):
 
 def test_provider_failure_is_explicit_fallback(client, auth, monkeypatch):
     monkeypatch.setattr(settings, 'ai_provider', 'meta')
+    monkeypatch.setattr(settings, 'meta_enabled', True)
     async def fail(self, message, verified):
         raise RuntimeError('Unavailable provider')
     monkeypatch.setattr(MetaAIProvider, 'explain', fail)
     response = client.post('/api/v1/tutor/chat', json={'equation': '2x+3=11', 'message': 'Help'}, headers=auth)
     assert response.status_code == 200
-    assert 'fallback' in response.json()['mode']
+    assert response.json()['mode'] == 'Mia'
     assert response.json()['verified_math']['solution'] == '4'
 
 

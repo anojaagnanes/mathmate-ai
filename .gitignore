@@ -1,6 +1,7 @@
 node_modules/
 .next/
 .venv/
+.venv-linux/
 __pycache__/
 .pytest_cache/
 *.pyc
@@ -10,3 +11,32 @@ __pycache__/
 dist/
 *.log
 backups/
+frontend/public/ocr/
+shots/
+.env*.local
+
+# Environment files and secrets
+.env*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local databases and backups
+*.sqlite
+*.sqlite3
+*.db-journal
+*.bak
+*.backup
+
+# Local generated files
+coverage/
+htmlcov/
+.cache/
+.DS_Store
+Thumbs.db
+
+# Local security backup
+backend/app/security_backup.py

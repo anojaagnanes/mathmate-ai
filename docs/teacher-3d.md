@@ -17,7 +17,7 @@ States: idle, listening (text-field focus, not microphone recording), thinking (
 
 ## Voice limitations and extension
 
-Browser voice metadata has no gender field. The selector lists English voices and supports preview and explicit preference saving. Existing saved preferences are respected. Microsoft Zira is preferred when available and no valid saved English voice is selected. This mapping is supported by Microsoft’s voice documentation: https://learn.microsoft.com/en-us/uwp/api/windows.media.speechsynthesis.voiceinformation.gender . Other unidentified voices require manual selection. The user should preview naturalness and warmth; browser playback events cannot prove subjective audio quality. Rate is 0.88, or 0.78 for slower explanation. Pitch is unaltered.
+Browser voice metadata has no gender field. The selector lists English voices and supports preview and explicit preference saving. Existing saved preferences are respected. Clara is Mia's default English voice when available and no valid saved English voice is selected; Microsoft Zira is the fallback. This mapping is supported by Microsoft’s voice documentation: https://learn.microsoft.com/en-us/uwp/api/windows.media.speechsynthesis.voiceinformation.gender . Other unidentified voices require manual selection. The user should preview naturalness and warmth; browser playback events cannot prove subjective audio quality. Rate is 0.88, or 0.78 for slower explanation. Pitch is unaltered.
 
 The mouth animation is a speech-state envelope, NOT phoneme/viseme-accurate lip synchronization. Naturalness is limited by the installed browser/OS voices and the legacy model's mesh and facial rig.
 

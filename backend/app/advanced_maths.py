@@ -112,6 +112,8 @@ def solve_inequality(source, variable=None):
         steps.append(step(str(roots),'Find the real zeros. These divide the number line into intervals; determine the polynomial sign on each interval.',sp.latex(roots)))
         steps.append(step(str(sp.factor(difference)),'Factor where possible. Include zero endpoints only for ≤ or ≥.',sp.latex(sp.factor(difference))))
     solution = sp.solve_univariate_inequality(normalized,target,relational=False)
+    if poly.degree() == 1 and sp.simplify(difference.subs(target, boundary)) != 0:
+        raise MathError('Could not verify the inequality boundary.')
     readable = 'No real solutions' if solution is sp.S.EmptySet else 'All real numbers' if solution == sp.S.Reals else str(solution)
     steps.append(step(readable,'The resulting real solution set. Parentheses exclude endpoints; square brackets include endpoints.',sp.latex(solution)))
     return result('inequality','Polynomial inequality',names,steps,readable)

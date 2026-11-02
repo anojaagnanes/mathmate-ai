@@ -30,7 +30,14 @@ def rate_limit(request: Request):
 
 
 def csrf(request: Request):
-    if request.headers.get('origin') != settings.frontend_origin or request.headers.get('x-mathmate-client') != 'web':
+    origin = request.headers.get('origin')
+    client = request.headers.get('x-mathmate-client')
+
+
+
+
+
+    if origin != settings.frontend_origin or client != 'web':
         raise HTTPException(403, 'Request origin or CSRF header missing.')
 
 
@@ -48,7 +55,7 @@ def issue(db: Session, user: User, response: Response, family=None):
     return {'access_token': access, 'token_type': 'bearer', 'user': {'id': user.id, 'name': user.name, 'email': user.email}}
 
 
-def current_user(credentials: HTTPAuthorizationCredentials | None = Depends(bearer), db: Session = Depends(get_db)):
+def current_user(request: Request, credentials: HTTPAuthorizationCredentials | None = Depends(bearer), db: Session = Depends(get_db)):
     try:
         if not credentials:
             raise ValueError()
@@ -57,6 +64,7 @@ def current_user(credentials: HTTPAuthorizationCredentials | None = Depends(bear
         active = db.scalar(select(RefreshToken).where(RefreshToken.family == claims['sid'], RefreshToken.user_id == claims['sub'], RefreshToken.revoked.is_(False), RefreshToken.expires > int(time.time())))
         if not user or not active:
             raise ValueError()
+        request.state.meta_session = claims['sid']
         return user
     except (jwt.PyJWTError, ValueError):
         raise HTTPException(401, 'Please sign in again.')

@@ -1,2 +1,0 @@
-Workspace creation verified
-Workspace modification verified

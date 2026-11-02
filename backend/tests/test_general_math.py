@@ -51,7 +51,7 @@ def test_step_sets_and_variable_changes():
     assert not analyze(['y=5','x=5'])['valid']
     assert analyze(['3n+4=40','3n=36','n=11'])['first_incorrect_step'] == 3
 
-@pytest.mark.parametrize('text', ['Matrix([[1,2]])','x^3=1'])
+@pytest.mark.parametrize('text', ['x^3=1'])
 def test_later_phase_errors(text):
     with pytest.raises(MathError): solve(text)
 
@@ -87,3 +87,10 @@ def test_worker_capacity_is_bounded(monkeypatch):
     monkeypatch.setattr(math_runtime, 'SLOTS', BoundedSemaphore(0))
     with pytest.raises(MathError, match='busy'):
         math_runtime.calculate('solve', 'x=1')
+
+
+def test_worker_startup_has_its_own_deadline(monkeypatch):
+    from app import math_runtime
+    monkeypatch.setattr(math_runtime, 'STARTUP_TIMEOUT_SECONDS', 0)
+    with pytest.raises(MathError, match='could not start'):
+        math_runtime.calculate('solve', '2+2')

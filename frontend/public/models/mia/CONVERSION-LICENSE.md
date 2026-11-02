@@ -4,11 +4,10 @@
 
 | File | Source | Licence |
 | :--- | :--- | :--- |
-| `ananya.glb` | Microsoft Rocketbox, `Female_Adult_07` | MIT |
-| `aarav.glb` | Microsoft Rocketbox, `Male_Adult_04` | MIT |
+| `teacher.glb` | Microsoft Rocketbox, `Female_Adult_07` | MIT |
 
-Both were converted from the original FBX by
-[`scripts/convert-rocketbox.py`](../../scripts/convert-rocketbox.py). The
+It was converted from the original FBX (skeleton/blendshape rename, unused
+morph targets dropped, textures repacked for the web). The
 conversion renames the skeleton and blendshapes, drops the morph targets this
 engine never drives, and repacks the textures for the web. It changes no
 geometry.
@@ -17,9 +16,6 @@ The [Microsoft Rocketbox avatar library](https://github.com/microsoft/Microsoft-
 is released under the MIT licence, the same licence as this project, so these
 files are redistributable without restriction. Attribution is appreciated but
 not required.
-
-There is no separate `default.glb`. The `default` and `kiosk` presets resolve to
-`ananya.glb`, because the file they used to point at was byte-identical to it.
 
 ## Previous assets
 

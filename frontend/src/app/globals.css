@@ -23,3 +23,33 @@
 @media(min-width:901px){.studio-grid{grid-template-columns:minmax(0,1fr) minmax(320px,370px)}.studio-left{display:block}.lesson-nav{display:flex}.teacher-panel{padding:20px}}
 @media(max-width:900px){.teacher-3d{height:400px;max-width:500px;margin-left:auto;margin-right:auto}}
 @media(prefers-reduced-motion:reduce){.board-equation{animation:none}.board-explaining{transition:none}}
+.question-composer{margin-top:20px;min-width:0}.question-composer textarea{width:100%;min-width:0;resize:vertical;line-height:1.6;font-family:inherit}.question-composer .tiny{margin:8px 0 14px}.question-attachment{display:grid;gap:8px;margin:18px 0;padding:14px;border:1px dashed #cfc0ee;border-radius:12px;background:#faf8ff}.question-attachment input{max-width:100%;min-width:0}.question-options{display:flex;align-items:end;flex-wrap:wrap;gap:12px}.question-options>label{flex:1;min-width:160px}.question-options>.button{flex-shrink:0}.question-preview{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:12px 0;overflow-wrap:anywhere}.question-preview img{width:100%;max-height:220px;object-fit:contain;border-radius:10px}.question-preview span{flex:1;min-width:0}.question-review{margin:16px 0;padding:16px;background:#f7f5fc;border-radius:12px}.question-supported{margin:18px 0 10px}.question-supported summary{cursor:pointer;font-size:13px;color:var(--purple)}.question-examples{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0}.whiteboard .question-examples .pill{flex:0 0 auto;white-space:nowrap;max-width:100%;overflow-x:auto;font-size:12px;padding:9px 12px;line-height:1.5}.question-composer .info-box{overflow-wrap:anywhere}@media(max-width:600px){.question-options>.button{width:100%}.question-review{padding:12px}.question-attachment{padding:10px}}
+.geometry-diagram{margin:16px 0 0;width:min(100%,360px)}.geometry-diagram svg{display:block;width:100%;max-height:210px}.geometry-diagram figcaption{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;font-size:12px}.geometry-diagram figcaption span{background:#eeeafe;padding:3px 8px;border-radius:6px}.geometry-diagram small{display:block;width:100%;color:var(--muted);font-size:10px}.geometry-outline{stroke-dasharray:1000;stroke-dashoffset:0;animation:draw-geometry 1.5s ease-out}.geometry-explaining .geometry-outline{stroke:#4f46e5;stroke-width:4}.guided-lesson{margin-top:16px;white-space:normal;width:100%}.board-explaining .board-equation{border-bottom:3px solid #ad97f4;padding-bottom:10px}.question-review ul{margin:0;padding-left:20px;font-size:13px}@keyframes draw-geometry{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}@media(prefers-reduced-motion:reduce){.geometry-outline{animation:none}}
+.whiteboard .question-examples .question-example-prose{white-space:normal;flex-basis:100%;text-align:left}
+.question-topic-link{font-size:12px;margin-top:16px}.topic-lessons-heading{margin-bottom:18px}.topic-example-section>p{margin:10px 0 22px;font-size:13px}.topic-example-card{min-width:0}.topic-example-card h3{margin:14px 0 8px;font-size:20px}.topic-example-card>p{font-size:13px;margin-bottom:10px}.topic-example-list{display:grid;gap:8px;margin-top:16px}.topic-example-button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-width:0;padding:12px 14px;border:1px solid #ded6f5;border-radius:9px;background:#f7f4ff;color:var(--purple);text-align:left;font-size:13px;line-height:1.6}.topic-example-button:hover{background:var(--lavender);border-color:#b8a3ef}.topic-example-button>span:first-child{min-width:0;overflow-wrap:anywhere}.topic-example-button>span:last-child{flex-shrink:0}
+
+/* Reusable narrated lesson board; the existing studio and Mia rig are unchanged. */
+.mia-lesson-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:24px;align-items:start}
+.mia-lesson{min-width:0}.teaching-board{margin:24px 0;padding:28px;border:1px solid #ded8f5;border-radius:18px;background:linear-gradient(#fff,#faf8ff);min-height:300px}
+.teaching-equation{min-height:100px;display:flex;align-items:center;font-family:Georgia,serif;font-size:clamp(24px,3vw,40px);color:#4f329e;white-space:pre-wrap;overflow-wrap:anywhere}
+.teaching-board p{line-height:1.8}.writing-pen{font-size:24px;color:#6846e8}.teaching-controls{display:flex;flex-wrap:wrap;gap:10px}
+.shopping-board{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin:24px 0}.notebook-shape{border:2px solid #6846e8;border-left:8px double #6846e8;border-radius:5px;padding:22px 12px;background:#eeeafe;transform:rotate(-3deg)}.shopping-board strong{display:block;margin-top:12px}.pen-shape{border-bottom:5px solid #6846e8;padding:12px}
+@media(max-width:900px){.mia-lesson-grid{grid-template-columns:minmax(0,1fr)}.teaching-board{padding:18px}.teaching-controls>button{flex:1 1 140px}}
+@media(prefers-reduced-motion:reduce){.notebook-shape{transform:none}}
+
+.mia-lesson-grid>.teacher-panel{min-width:0;max-width:100%;overflow-wrap:anywhere}.mia-lesson-grid .teacher-panel select{width:100%;max-width:100%;min-width:0}.mia-lesson-grid .voice-controls{min-width:0;flex-wrap:wrap}
+.mia-board{background:#fdfcff;border:1px solid #e7e3f7;border-radius:14px;padding:20px;margin:16px 0;position:relative;min-height:160px}
+.mia-steps{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:10px}
+.mia-steps li{display:flex;gap:12px;align-items:baseline;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid #eeeaf7}
+.mia-steps li.mia-current{border-color:#b8a3ef;background:#f7f4ff}
+.mia-step-no{font-size:11px;font-weight:700;color:#7663a5;min-width:18px}
+.mia-equation{font-family:Georgia,serif;font-size:20px;color:#15163f;overflow-wrap:anywhere}
+.mia-pen{display:inline-block;width:2px;height:20px;background:#6846e8;margin-left:6px;vertical-align:-4px;animation:mia-blink 1s steps(2) infinite}
+@keyframes mia-blink{50%{opacity:0}}
+.mia-controls{display:grid;gap:12px;margin:16px 0}
+.mia-controls .row{flex-wrap:wrap}
+.mia-panel{border:1px solid var(--border);border-radius:14px;background:#fff;padding:18px;margin:18px 0}
+.mia-reply{font-size:13px;color:#3d3860;white-space:pre-wrap;margin:10px 0}
+.mia-plan{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.mia-plan span{font-size:10px;background:#eeeafe;color:#655097;padding:3px 8px;border-radius:6px}
+.classroom-working[hidden]{display:none!important}

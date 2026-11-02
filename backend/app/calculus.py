@@ -62,7 +62,7 @@ def solve_calculus(source, selected_variable=None):
         verified = sp.simplify(answer-sp.diff(value, symbol)) == 0
         solution, latex = str(answer), sp.latex(answer)
         steps.append(step(solution, 'Combine the differentiated terms. The result is '+solution+'.', latex))
-        steps.append(step(solution, 'Check: SymPy independently differentiates the original polynomial and obtains the same expression.', latex))
+        steps.append(step(solution, 'Check: an independent differentiation of the original polynomial obtains the same expression.', latex))
     else:
         verified = sp.simplify(sp.diff(answer, symbol)-value) == 0
         solution, latex = str(answer)+' + C', sp.latex(answer)+'+C'

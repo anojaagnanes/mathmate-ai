@@ -6,6 +6,11 @@ from .math_parser import MathError, VARIABLES, parse, parse_defined
 x = sp.Symbol('x', real=True)  # Compatibility for existing callers.
 
 
+def review_work(steps):
+    from .work_review import review_work as review
+    return review(steps)
+
+
 def expression(source):
     return parse(source)[0]
 
@@ -29,6 +34,13 @@ def solve(equation, variable=None):
         raise MathError('Use a question of 1–200 characters.')
     if variable and variable not in VARIABLES:
         raise MathError('Choose a supported variable such as x, y, z or n.')
+    from .topic_maths import COMMANDS, solve_topic
+    topic_command = re.match(r'\s*([a-z_]+)\s*\(', equation)
+    if topic_command and topic_command[1] in COMMANDS:
+        return solve_topic(equation, variable)
+    if re.match(r'\s*(?:Matrix|Vector|det|inverse|transpose|matmul|matrixadd|dot|cross|norm)\b', equation):
+        from .linear_algebra import solve_linear_algebra
+        return solve_linear_algebra(equation, variable)
     if re.match(r'\s*(?:diff\b|integrate\b|d/d)', equation):
         from .calculus import solve_calculus
         return solve_calculus(equation, variable)
@@ -119,7 +131,7 @@ def solve(equation, variable=None):
 
 def analyze(steps):
     original = solve(steps[0])
-    if original.get('topic') in ('Linear system', 'Polynomial inequality') or original['kind'] in ('expression', 'underdetermined', 'parametric', 'calculus'):
+    if original.get('topic') in ('Linear system', 'Polynomial inequality') or original['kind'] in ('expression', 'underdetermined', 'parametric', 'calculus', 'linear_algebra'):
         raise MathError('Step checking currently requires single-variable linear or quadratic equations.')
     variable = original['variable']
     for index, text in enumerate(steps[1:], 1):

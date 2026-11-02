@@ -2,6 +2,16 @@ import os
 os.environ['JWT_SECRET'] = 'test-only-secret-never-use-in-production-123456789'
 os.environ['DATABASE_URL'] = 'sqlite://'
 os.environ['AI_PROVIDER'] = 'mock'
+os.environ['VISION_PROVIDER'] = 'default'
+os.environ['FRONTEND_ORIGIN'] = 'http://localhost:3000'
+os.environ['META_ENABLED'] = 'false'
+os.environ['META_ENABLED_UNTIL'] = '0'
+os.environ['META_ESTIMATED_COST_BUDGET_USD'] = '0'
+os.environ['META_BASE_URL'] = ''
+os.environ['META_HOST'] = 'meta'
+os.environ['META_MODEL'] = 'muse-spark-1.3'
+os.environ['MODEL_API_KEY'] = ''
+os.environ['BASETEN_API_KEY'] = ''
 
 import pytest
 from sqlalchemy import create_engine
@@ -15,7 +25,9 @@ from app.security import attempts
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch,tmp_path):
+    from app.config import settings
+    monkeypatch.setattr(settings,'meta_usage_db',str(tmp_path/'test-usage.db'))
     engine = create_engine('sqlite://', connect_args={'check_same_thread': False}, poolclass=StaticPool)
     Base.metadata.create_all(engine)
     factory = sessionmaker(engine, expire_on_commit=False)
