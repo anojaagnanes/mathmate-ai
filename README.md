@@ -10,7 +10,7 @@ Developed for the **Meta Global AI Developer Hackathon 2026**, with a documented
 
 ## Demo & documentation
 
-- **Demo video:** Add the YouTube URL here once the final demo has been uploaded.
+- **Demo video:** [Watch on YouTube](https://youtu.be/IMvKsh4gJ7w)
 - **Screenshots:** Add screenshots or a short GIF of Check My Work, Mastery Mission, and Mia Learning Studio when ready.
 - **Architecture diagrams:** [Project architecture](docs/project-architecture.svg) · [System design](docs/system-design.svg)
 - **Technical details:** [ARCHITECTURE.md](ARCHITECTURE.md)
